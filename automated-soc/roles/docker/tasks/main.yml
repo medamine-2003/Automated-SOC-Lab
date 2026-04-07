@@ -1,0 +1,30 @@
+---
+- name: Remove broken Docker repo left by script
+  file:
+    path: /etc/apt/sources.list.d/docker.list
+    state: absent
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install Docker and Dependencies
+  apt:
+    name:
+      - ca-certificates
+      - curl
+      - git
+      - docker.io
+    state: present
+
+- name: Ensure Docker service is running
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add user to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
