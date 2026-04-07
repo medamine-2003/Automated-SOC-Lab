@@ -1,0 +1,7 @@
+---
+- name: Deploy Automated SOC Infrastructure
+  hosts: soc_host
+  become: yes # Run as sudo/root
+  roles:
+    - docker
+    - wazuh
