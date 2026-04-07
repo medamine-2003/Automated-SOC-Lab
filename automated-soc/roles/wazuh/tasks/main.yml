@@ -1,0 +1,29 @@
+---
+- name: Increase max_map_count for Wazuh Indexer
+  sysctl:
+    name: vm.max_map_count
+    value: '262144'
+    state: present
+    reload: yes
+
+- name: Install Docker Compose Plugin
+  apt:
+    name: docker-compose
+    state: present
+
+- name: Clone official Wazuh Docker repository
+  git:
+    repo: https://github.com/wazuh/wazuh-docker.git
+    dest: /opt/wazuh-docker
+    version: v4.8.0
+
+- name: Generate Wazuh certificates
+  shell: docker compose -f generate-indexer-certs.yml run --rm generator
+  args:
+    chdir: /opt/wazuh-docker/single-node
+    creates: /opt/wazuh-docker/single-node/config/wazuh_indexer_ssl_certs/root-ca.pem
+
+- name: Start Wazuh Stack via Docker Compose
+  shell: docker compose up -d
+  args:
+    chdir: /opt/wazuh-docker/single-node
