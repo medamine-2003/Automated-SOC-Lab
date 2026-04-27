@@ -1,0 +1,21 @@
+---
+- name: Create directory for Shuffle
+  file:
+    path: /opt/shuffle
+    state: directory
+    mode: '0755'
+
+- name: Download Shuffle docker-compose.yml
+  get_url:
+    url: https://raw.githubusercontent.com/Shuffle/Shuffle/master/docker-compose.yml
+    dest: /opt/shuffle/docker-compose.yml
+
+- name: Download Shuffle .env file
+  get_url:
+    url: https://raw.githubusercontent.com/Shuffle/Shuffle/master/.env
+    dest: /opt/shuffle/.env
+
+- name: Start Shuffle Stack via Docker Compose
+  shell: docker compose up -d
+  args:
+    chdir: /opt/shuffle
