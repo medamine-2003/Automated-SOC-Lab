@@ -1,9 +1,4 @@
 ---
-- name: Remove broken Docker repo left by script
-  file:
-    path: /etc/apt/sources.list.d/docker.list
-    state: absent
-
 - name: Update apt cache
   apt:
     update_cache: yes
@@ -14,7 +9,9 @@
       - ca-certificates
       - curl
       - git
+      - gnupg
       - docker.io
+      - docker-compose-v2 # Modern Docker Compose plugin
     state: present
 
 - name: Ensure Docker service is running
