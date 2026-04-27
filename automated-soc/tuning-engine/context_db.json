@@ -1,0 +1,24 @@
+{
+  "known_assets": {
+    "<IP-address-example1>": {
+      "hostname": "windows-target",
+      "role": "Internal Server",
+      "allowed_noisy_rules": []
+    },
+    "<IP-address-example2>": {
+      "hostname": "External_Scanner_Corp",
+      "role": "Authorized External Vulnerability Scanner",
+      "allowed_noisy_rules": ["60122", "60204"]
+    }
+  },
+  "rule_metadata": {
+    "60122": {
+      "description": "Logon Failure - Unknown user or bad password",
+      "criticality": "Medium"
+    },
+    "60204": {
+      "description": "Multiple Windows Logon Failures",
+      "criticality": "High"
+    }
+  }
+}
