@@ -1,0 +1,47 @@
+---
+- name: Create Temp Directory
+  win_file:
+    path: C:\Temp
+    state: directory
+
+- name: Download Sysmon directly from Microsoft
+  win_get_url:
+    url: https://download.sysinternals.com/files/Sysmon.zip
+    dest: C:\Temp\Sysmon.zip
+
+- name: Unzip Sysmon
+  win_unzip:
+    src: C:\Temp\Sysmon.zip
+    dest: C:\Temp\Sysmon
+    creates: C:\Temp\Sysmon\Sysmon64.exe
+
+- name: Download SwiftOnSecurity Sysmon Config
+  win_get_url:
+    url: https://raw.githubusercontent.com/SwiftOnSecurity/sysmon-config/master/sysmonconfig-export.xml
+    dest: C:\Temp\sysmonconfig.xml
+
+- name: Install and Configure Sysmon
+  win_shell: .\Sysmon64.exe -accepteula -i C:\Temp\sysmonconfig.xml
+  args:
+    chdir: C:\Temp\Sysmon
+  register: sysmon_install
+  failed_when:
+    - sysmon_install.rc != 0
+    - '"already installed" not in sysmon_install.stderr'
+
+- name: Download Wazuh Agent
+  win_get_url:
+    url: https://packages.wazuh.com/4.x/windows/wazuh-agent-4.8.0-1.msi
+    dest: C:\Temp\wazuh-agent.msi
+
+- name: Install Wazuh Agent
+  win_package:
+    path: C:\Temp\wazuh-agent.msi
+    state: present
+    arguments: /q WAZUH_MANAGER="{{ hostvars['soc_manager']['ansible_host'] }}" WAZUH_REGISTRATION_SERVER="{{ hostvars['soc_manager']['ansible_host'] }}"
+
+- name: Ensure Wazuh service is running
+  win_service:
+    name: WazuhSvc
+    state: started
+    start_mode: auto
