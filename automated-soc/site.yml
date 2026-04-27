@@ -5,3 +5,10 @@
   roles:
     - docker
     - wazuh
+    - shuffle
+
+- name: Deploy Windows Endpoint Agent
+  hosts: windows_agents
+  gather_facts: no # Speeds up execution
+  roles:
+    - windows_agent
