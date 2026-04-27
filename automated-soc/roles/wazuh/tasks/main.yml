@@ -1,4 +1,10 @@
 ---
+- name: Check if Wazuh Indexer is already running
+  command: docker ps --filter "name=wazuh.indexer" --quiet
+  register: wazuh_running
+  changed_when: false
+  ignore_errors: yes
+
 - name: Increase max_map_count for Wazuh Indexer
   sysctl:
     name: vm.max_map_count
@@ -6,24 +12,40 @@
     state: present
     reload: yes
 
-- name: Install Docker Compose Plugin
-  apt:
-    name: docker-compose
-    state: present
+- name: Create deployment directory
+  file:
+    path: /opt/wazuh-docker
+    state: directory
+    mode: '0755'
 
 - name: Clone official Wazuh Docker repository
   git:
     repo: https://github.com/wazuh/wazuh-docker.git
     dest: /opt/wazuh-docker
     version: v4.8.0
+    force: no
 
 - name: Generate Wazuh certificates
   shell: docker compose -f generate-indexer-certs.yml run --rm generator
   args:
     chdir: /opt/wazuh-docker/single-node
     creates: /opt/wazuh-docker/single-node/config/wazuh_indexer_ssl_certs/root-ca.pem
+  when: wazuh_running.stdout == ""
 
 - name: Start Wazuh Stack via Docker Compose
   shell: docker compose up -d
   args:
     chdir: /opt/wazuh-docker/single-node
+  register: compose_output
+  changed_when: "'Created' in compose_output.stdout or 'Started' in compose_output.stdout"
+  when: wazuh_running.stdout == ""
+
+- name: Verify Wazuh Dashboard is responsive
+  uri:
+    url: "https://{{ ansible_host }}/app/login"
+    status_code: [200, 302, 401]
+    validate_certs: no
+  retries: 30
+  delay: 10
+  until: uri_result.status in [200, 302, 401]
+  register: uri_result
